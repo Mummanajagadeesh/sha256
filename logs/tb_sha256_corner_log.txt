@@ -1,0 +1,12 @@
+
+=== SHA256 Corner-Case Verification ===
+
++----+----------+---------+------------------------------------------+------------------------------------------+---+------+---------+----------+
+|  1 |             zero | corner | 0000000000000000000000000000000000000000 | da5698be17b9b46962335799779fbeca8ce5d491 | 1 | PASS   |     700 |     660 |
+|  2 |         all_ones | corner | ffffffffffffffffffffffffffffffffffffffff | ef0c748df4da50a8d6c43c013edc3ce76c9d9fa9 | 1 | PASS   |    1360 |     660 |
+|  3 |      alternating | corner | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 54067259e9447b444aabb5505eeacca88841dc0a | 1 | PASS   |    2020 |     660 |
++----+----------+---------+------------------------------------------+------------------------------------------+---+------+---------+----------+
+
+Total tests: 3  Failures: 0
+25461580216795114449737438035
+src/tb/my_tbs/tb_sha256_corner.v:45: $finish called at 2020000 (1ps)

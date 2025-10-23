@@ -1,27 +1,58 @@
+# SHA256 Core Functional Verification
+
 ## Objective
 
-To functionally verify the `secworks/sha256` open-source core using a directed, random, and corner-case testbench that validates core functionality, control interface behavior, and output correctness for representative message inputs.
+To functionally verify the `secworks/sha256` open-source core using directed, random, and corner-case testbenches that validate core functionality, control interface behavior, and output correctness for representative message inputs.
+
+---
+
+## Project Structure
+
+```
+sha256/
+├─ src/
+│  ├─ rtl/
+│  │  ├─ sha256.v
+│  │  ├─ sha256_core.v
+│  │  ├─ sha256_k_constants.v
+│  │  └─ sha256_w_mem.v
+│  └─ tb/
+│     ├─ my_tb_sha256_core.v         # Monolithic testbench
+│     ├─ tb_sha256.v
+│     ├─ tb_sha256_core.v
+│     ├─ tb_sha256_w_mem.v
+│     └─ my_tbs/                     # Split testbenches
+│        ├─ tb_sha256_corner.v
+│        ├─ tb_sha256_mode.v
+│        ├─ tb_sha256_multi.v
+│        ├─ tb_sha256_random.v
+│        └─ tb_sha256_single.v
+├─ logs/                             # Folder where simulation logs are saved
+├─ run_tests.tcl                     # TCL automation script
+└─ README.md
+```
 
 ---
 
 ## Verification Environment
 
-| Component      | Description                                                                    |
-| -------------- | ------------------------------------------------------------------------------ |
-| **DUT**        | `sha256_core.v`, `sha256_k_constants.v`, `sha256_w_mem.v` from secworks/sha256 |
-| **Testbench**  | Self-checking Verilog TB `my_tb_sha256_core.v`                                 |
-| **Automation** | `run_tests.tcl` automates compile, run, and pass/fail log scanning             |
-| **Simulator**  | Icarus Verilog (`iverilog`, `vvp`)                                             |
+| Component      | Description                                                                         |
+| -------------- | ----------------------------------------------------------------------------------- |
+| **DUT**        | `sha256_core.v`, `sha256_k_constants.v`, `sha256_w_mem.v` from secworks/sha256      |
+| **Testbench**  | Self-checking Verilog TBs: `my_tb_sha256_core.v` (monolithic) or split `my_tbs/*.v` |
+| **Automation** | `run_tests.tcl` automates compile, run, and pass/fail log scanning                  |
+| **Simulator**  | Icarus Verilog (`iverilog`, `vvp`)                                                  |
 
 ---
 
 ## Testbench Features
 
-* Fully self-checking (prints formatted verification table).
-* Directed, random, and corner-case tests.
+* Fully self-checking with formatted verification table.
+* Supports directed, random, and corner-case tests.
 * Supports both `mode = 1` and `mode = 0`.
 * Checks for `digest_valid`, compares against expected digest, and reports **PASS/FAIL**.
 * Produces structured table and summary with total tests, failures, and runtime.
+* Automated logs in `logs/` folder and combined log `logs/combined_log.txt`.
 
 ---
 
@@ -56,43 +87,44 @@ To functionally verify the `secworks/sha256` open-source core using a directed, 
 | 8 | **Mode control (mode 0 vs 1)**                    | Alternate mode digest path          | Test 10         |
 | 9 | **Interface handshake (`ready`, `digest_valid`)** | Proper sequencing and data validity | All tests       |
 
-**Total functionalities verified:** 9 (within required 5–10 range).
-**Total test cases executed:** 10.
+**Total functionalities verified:** 9
+**Total test cases executed:** 10
 
 ---
 
-## Execution and Results
+## Logs & Automation
 
-**Command:**
+* **Folder structure:** `logs/` (individual TB logs)
+* **Combined log:** `logs/combined_log.txt`
+* **Run all tests:**
 
 ```bash
 tclsh run_tests.tcl
 ```
 
-**Output Summary (from sample run):**
+**Sample output (final summary):**
 
 ```
 Total tests: 10
 Total failures: 0
-RESULT: ALL TESTS PASSED
+RESULT: ALL TESTS PASSED ✅
 ```
-
-Each test row includes ID, name, type, truncated expected/actual digest, valid flag, result, simulation time, and duration.
 
 ---
 
 ## Deliverables
 
-| File                         | Purpose                   |
-| ---------------------------- | ------------------------- |
-| `src/tb/my_tb_sha256_core.v` | Main testbench            |
-| `run_tests.tcl`              | Compile/run automation    |
-| `my_tb_sha256_core_log.txt`  | Example simulation log    |
-| `README.md`                  | Documentation (this file) |
+| File                         | Purpose                                                 |
+| ---------------------------- | ------------------------------------------------------- |
+| `src/tb/my_tb_sha256_core.v` | Monolithic testbench                                    |
+| `src/tb/my_tbs/*.v`          | Split testbenches (single, multi, random, corner, mode) |
+| `run_tests.tcl`              | Compile/run automation script                           |
+| `logs/`                      | Contains individual and combined simulation logs        |
+| `README.md`                  | Documentation (this file)                               |
 
 ---
 
 ## Conclusion
 
-The provided testbench successfully validates the **secworks/sha256** core across directed, random, and corner-case scenarios.
-All ten tests passed with no functional mismatches, demonstrating correct digest generation, control-signal timing, and mode handling.
+The testbench setup (both monolithic and split) successfully verifies the **secworks/sha256** core across directed, random, and corner-case scenarios.
+All tests pass, demonstrating correct digest generation, control-signal timing, and mode handling.
