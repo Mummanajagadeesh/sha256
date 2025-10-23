@@ -3,15 +3,14 @@
 
 PASS:              abc digest = ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
 PASS:            empty digest = e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-PASS:            hello digest = 2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824
-PASS: Zero input test
-PASS: All ones input test
-PASS: Alternating pattern input test
+PASS:       hello+msg2 multi-block digest executed
 PASS: Random test 1 executed cleanly
 PASS: Random test 2 executed cleanly
 PASS: Random test 3 executed cleanly
-PASS: Random test 4 executed cleanly
-PASS: Random test 5 executed cleanly
+PASS:             zero corner-case test
+PASS:         all_ones corner-case test
+PASS:      alternating corner-case test
+PASS:        abc_mode0 digest = 23097d223405d8228642a477bda255b32aadbce4bda0b3f7e36c9da7d2da082d
 
-All 11 tests PASSED ✅
-src/tb/my_tb_sha256_core.v:204: $finish called at 7300000 (1ps)
+All 10 tests PASSED ✅
+src/tb/my_tb_sha256_core.v:171: $finish called at 7300000 (1ps)
