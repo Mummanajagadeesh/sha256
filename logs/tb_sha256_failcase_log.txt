@@ -1,0 +1,14 @@
+
+=== SHA256 Intentional Fail-Case Verification ===
+
++----+----------+------------------------------------------+------------------------------------------+---+------+---------+----------+
+|  1 |    abc_wrong_exp | exp=ffffffffffffffffffffffffffffffffffffffff | act=ba7816bf8f01cfea414140de5dae2223b00361a3 | valid=1 | FAIL   |     700 |     660 |
+|  2 | zero_block_wrong | exp=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | act=da5698be17b9b46962335799779fbeca8ce5d491 | valid=1 | FAIL   |    1360 |     660 |
+|  3 |          x_block | exp=deadbeefdeadbeefdeadbeefdeadbeefdeadbeef | act=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx | valid=1 | FAIL   |    2020 |     660 |
+|  4 | bad_protocol | Manual protocol violation (next high before ready) |
+|  5 |   multi_reversed | exp=0000000000000000000000000000000000000000 | act=441afb4e39b230441c9384bd39bc8bb325529ea5 | valid=1 | FAIL   |    2680 |     650 |
++----+----------+------------------------------------------+------------------------------------------+---+------+---------+----------+
+
+Total tests: 5  Failures: 4
+132204082972997788152238493911103215624846406428927789225042985
+src/tb/my_tbs/tb_sha256_failcase.v:120: $finish called at 2680000 (1ps)

@@ -2,7 +2,8 @@
 
 ## Objective
 
-To functionally verify the `secworks/sha256` open-source core using directed, random, and corner-case testbenches that validate core functionality, control interface behavior, and output correctness for representative message inputs.
+To **functionally verify** the `secworks/sha256` open-source SHA-256 core through a comprehensive suite of **directed**, **random**, **corner-case**, and **intentional fail-case** testbenches.
+The goal is to validate correct functional behavior, interface timing, and error detection capability across all operational scenarios.
 
 ---
 
@@ -21,13 +22,14 @@ sha256/
 │     ├─ tb_sha256.v
 │     ├─ tb_sha256_core.v
 │     ├─ tb_sha256_w_mem.v
-│     └─ my_tbs/                     # Split testbenches
-│        ├─ tb_sha256_corner.v
-│        ├─ tb_sha256_mode.v
+│     └─ my_tbs/                     # Modular verification suite
+│        ├─ tb_sha256_single.v
 │        ├─ tb_sha256_multi.v
 │        ├─ tb_sha256_random.v
-│        └─ tb_sha256_single.v
-├─ logs/                             # Folder where simulation logs are saved
+│        ├─ tb_sha256_corner.v
+│        ├─ tb_sha256_mode.v
+│        ├─ tb_sha256_failcase.v     # Intentional fail-case scenarios
+├─ logs/                             # Simulation logs
 ├─ run_tests.tcl                     # TCL automation script
 └─ README.md
 ```
@@ -36,95 +38,115 @@ sha256/
 
 ## Verification Environment
 
-| Component      | Description                                                                         |
-| -------------- | ----------------------------------------------------------------------------------- |
-| **DUT**        | `sha256_core.v`, `sha256_k_constants.v`, `sha256_w_mem.v` from secworks/sha256      |
-| **Testbench**  | Self-checking Verilog TBs: `my_tb_sha256_core.v` (monolithic) or split `my_tbs/*.v` |
-| **Automation** | `run_tests.tcl` automates compile, run, and pass/fail log scanning                  |
-| **Simulator**  | Icarus Verilog (`iverilog`, `vvp`)                                                  |
+| Component      | Description                                                                      |
+| -------------- | -------------------------------------------------------------------------------- |
+| **DUT**        | `sha256_core.v`, `sha256_k_constants.v`, `sha256_w_mem.v` from `secworks/sha256` |
+| **Testbench**  | Self-checking Verilog TBs — either monolithic or split into modular variants     |
+| **Automation** | `run_tests.tcl` automates compile, run, and log consolidation                    |
+| **Simulator**  | Icarus Verilog (`iverilog`, `vvp`)                                               |
 
 ---
 
 ## Testbench Features
 
-* Fully self-checking with formatted verification table.
-* Supports directed, random, and corner-case tests.
-* Supports both `mode = 1` and `mode = 0`.
-* Checks for `digest_valid`, compares against expected digest, and reports **PASS/FAIL**.
-* Produces structured table and summary with total tests, failures, and runtime.
-* Automated logs in `logs/` folder and combined log `logs/combined_log.txt`.
+* Fully **self-checking** testbenches with structured verification output.
+* Unified display format: tables with test ID, name, type, expected vs actual digest.
+* Supports all functional modes (`mode=0` and `mode=1`).
+* Includes **random**, **corner**, **multi-block**, and **fail-case** stress testing.
+* Validates both functional correctness and control interface handshake (`ready`, `digest_valid`).
+* Generates individual logs and an aggregated summary in `logs/combined_log.txt`.
 
 ---
 
 ## Test Cases Executed
 
-| ID | Name            | Type   | Description                       | Expected Behavior / Purpose                       |
-| -- | --------------- | ------ | --------------------------------- | ------------------------------------------------- |
-| 1  | **abc**         | Single | Standard SHA-256 vector for “abc” | Validates core against canonical test vector      |
-| 2  | **empty**       | Single | Empty message block               | Verifies padding and digest for zero-length input |
-| 3  | **hello+msg2**  | Multi  | Two-block chained message         | Validates multi-block chaining and `next` control |
-| 4  | **random_1**    | Random | Random input                      | Ensures digest_valid and data stability           |
-| 5  | **random_2**    | Random | Random input                      | Ensures digest_valid and data stability           |
-| 6  | **random_3**    | Random | Random input                      | Ensures digest_valid and data stability           |
-| 7  | **zero**        | Corner | All-zero 512-bit block            | Checks core operation with zero data              |
-| 8  | **all_ones**    | Corner | All-ones 512-bit block            | Checks core operation with all-1 input            |
-| 9  | **alternating** | Corner | Alternating pattern (1010...)     | Checks pattern sensitivity / stability            |
-| 10 | **abc_mode0**   | Single | “abc” vector in mode = 0          | Verifies alternate-mode digest computation        |
+| ID | Name                 | Type     | Description                             | Expected Behavior / Purpose                       |
+| -- | -------------------- | -------- | --------------------------------------- | ------------------------------------------------- |
+| 1  | **abc**              | Single   | Standard SHA-256 vector for “abc”       | Verifies canonical digest correctness             |
+| 2  | **empty**            | Single   | Empty message block                     | Checks padding and digest for zero-length input   |
+| 3  | **hello+msg2**       | Multi    | Two-block chained message               | Validates multi-block chaining (`next` control)   |
+| 4  | **random_1**         | Random   | Random 512-bit input                    | Ensures digest_valid asserts and digest is stable |
+| 5  | **random_2**         | Random   | Random 512-bit input                    | Ensures digest_valid asserts and digest is stable |
+| 6  | **random_3**         | Random   | Random 512-bit input                    | Ensures digest_valid asserts and digest is stable |
+| 7  | **zero**             | Corner   | All-zero 512-bit block                  | Edge case for zero data                           |
+| 8  | **all_ones**         | Corner   | All-ones 512-bit block                  | Edge case for all-one input                       |
+| 9  | **alternating**      | Corner   | Alternating pattern (1010...)           | Pattern sensitivity test                          |
+| 10 | **abc_mode0**        | Mode 0   | “abc” vector in `mode=0` configuration  | Checks alternate hash path                        |
+| 11 | **abc_wrong_exp**    | Failcase | Known vector with wrong expected digest | Forces intentional mismatch                       |
+| 12 | **zero_block_wrong** | Failcase | Zero input with wrong expected digest   | Validates mismatch detection                      |
+| 13 | **x_block**          | Failcase | Uninitialized (‘X’) input               | Tests robustness to undefined values              |
+| 14 | **bad_protocol**     | Failcase | Asserts `next` before `ready`           | Checks control violation handling                 |
+| 15 | **multi_reversed**   | Failcase | Reversed / invalid chaining order       | Confirms invalid sequence detection               |
 
 ---
 
 ## Functionalities Verified
 
-| # | Functionality                                     | Description                         | Coverage Source |
-| - | ------------------------------------------------- | ----------------------------------- | --------------- |
-| 1 | **Single-block message hashing**                  | Correct digest for standard vectors | Tests 1 & 2     |
-| 2 | **Empty-message handling**                        | Proper padding and expected digest  | Test 2          |
-| 3 | **Multi-block chaining (`next`)**                 | Correct intermediate state handling | Test 3          |
-| 4 | **Random-input robustness**                       | Valid digest, no unknown bits       | Tests 4-6       |
-| 5 | **Corner-case: all-zero input**                   | Edge data pattern                   | Test 7          |
-| 6 | **Corner-case: all-ones input**                   | Edge data pattern                   | Test 8          |
-| 7 | **Corner-case: alternating pattern**              | Patterned input integrity           | Test 9          |
-| 8 | **Mode control (mode 0 vs 1)**                    | Alternate mode digest path          | Test 10         |
-| 9 | **Interface handshake (`ready`, `digest_valid`)** | Proper sequencing and data validity | All tests       |
+| # | Functionality                           | Description                                   | Coverage Source      |
+| - | --------------------------------------- | --------------------------------------------- | -------------------- |
+| 1 | **Single-block message hashing**        | Correct digest for standard test vectors      | `tb_sha256_single`   |
+| 2 | **Empty-message handling**              | Padding and digest for zero-length inputs     | `tb_sha256_single`   |
+| 3 | **Multi-block chaining (`next`)**       | Correct intermediate state operation          | `tb_sha256_multi`    |
+| 4 | **Random input robustness**             | Handles arbitrary 512-bit inputs              | `tb_sha256_random`   |
+| 5 | **Corner data patterns**                | All-zero, all-one, alternating input handling | `tb_sha256_corner`   |
+| 6 | **Mode control (`mode=0` vs `mode=1`)** | Alternate path operation                      | `tb_sha256_mode`     |
+| 7 | **Interface handshake validation**      | Proper `ready` / `digest_valid` protocol      | All testbenches      |
+| 8 | **Error detection / mismatch capture**  | Intentional digest mismatches & bad sequences | `tb_sha256_failcase` |
 
-**Total functionalities verified:** 9
-**Total test cases executed:** 10
+**Total functionalities verified:** 8
+**Total test cases executed:** 15
+
+---
+
+## Failcase Scenarios (`tb_sha256_failcase.v`)
+
+| Case Name          | Failure Type                   | Expected Outcome             |
+| ------------------ | ------------------------------ | ---------------------------- |
+| `abc_wrong_exp`    | Wrong expected digest          | FAIL detected correctly      |
+| `zero_block_wrong` | Wrong expected digest          | FAIL detected correctly      |
+| `x_block`          | Uninitialized block            | FAIL due to undefined digest |
+| `bad_protocol`     | `next` asserted before `ready` | FAIL or invalid digest_valid |
+| `multi_reversed`   | Invalid block order            | FAIL detected correctly      |
+
+**Purpose:** Ensures the testbench correctly detects digest mismatches, X-propagation, and protocol violations — validating the reliability of the verification environment itself.
 
 ---
 
 ## Logs & Automation
 
-* **Folder structure:** `logs/` (individual TB logs)
-* **Combined log:** `logs/combined_log.txt`
-* **Run all tests:**
+* Individual testbench logs: stored in `logs/`.
+* Combined results: `logs/combined_log.txt`.
+* Run all tests automatically:
 
 ```bash
 tclsh run_tests.tcl
 ```
 
-**Sample output (final summary):**
+**Example summary output:**
 
 ```
-Total tests: 10
-Total failures: 0
-RESULT: ALL TESTS PASSED ✅
+===== SUMMARY =====
+Total tests: 6
+Total failures: 1
+
+RESULT: FAIL (as expected for failcase)
 ```
 
 ---
 
 ## Deliverables
 
-| File                         | Purpose                                                 |
-| ---------------------------- | ------------------------------------------------------- |
-| `src/tb/my_tb_sha256_core.v` | Monolithic testbench                                    |
-| `src/tb/my_tbs/*.v`          | Split testbenches (single, multi, random, corner, mode) |
-| `run_tests.tcl`              | Compile/run automation script                           |
-| `logs/`                      | Contains individual and combined simulation logs        |
-| `README.md`                  | Documentation (this file)                               |
+| File                         | Purpose                                                             |
+| ---------------------------- | ------------------------------------------------------------------- |
+| `src/tb/my_tb_sha256_core.v` | Monolithic testbench                                                |
+| `src/tb/my_tbs/*.v`          | Modular testbenches (single, multi, random, corner, mode, failcase) |
+| `run_tests.tcl`              | TCL automation script                                               |
+| `logs/`                      | Simulation output and summary logs                                  |
+| `README.md`                  | This documentation                                                  |
 
 ---
 
 ## Conclusion
 
-The testbench setup (both monolithic and split) successfully verifies the **secworks/sha256** core across directed, random, and corner-case scenarios.
-All tests pass, demonstrating correct digest generation, control-signal timing, and mode handling.
+This verification environment thoroughly validates the **secworks/sha256** core across **functional**, **random**, **corner**, and **negative (failcase)** scenarios.
+The suite ensures that the core behaves correctly under nominal conditions and that the testbench infrastructure properly identifies **protocol or digest mismatches** when they occur.

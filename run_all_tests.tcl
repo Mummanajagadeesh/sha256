@@ -12,6 +12,7 @@ set test_list {
     tb_sha256_random
     tb_sha256_corner
     tb_sha256_mode
+    tb_sha256_failcase
 }
 
 # Open combined log
