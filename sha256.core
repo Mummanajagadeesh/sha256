@@ -1,6 +1,8 @@
 CAPI=2:
 
-name : secworks:crypto:sha256:0
+name : secworks:crypto:sha256:1.0.0
+description: Hardware implementation of the SHA-256 cryptographic hash function with support for both SHA-256 and SHA-224.
+license: BSD-2-Clause
 
 filesets:
   rtl:
