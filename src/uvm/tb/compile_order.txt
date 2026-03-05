@@ -1,0 +1,109 @@
+=============================================================================
+  SHA-256 UVM Testbench — EDA Playground Setup Guide
+=============================================================================
+
+-------------------------------------------------------------
+ TOOL SETTINGS  (EDA Playground left panel)
+-------------------------------------------------------------
+  Simulator    : Cadence Xcelium  (or Mentor Questa / Synopsys VCS)
+  Language     : SystemVerilog / UVM
+  UVM version  : UVM 1.2  (select from Libraries dropdown)
+
+-------------------------------------------------------------
+ FILES TO ADD IN "TESTBENCH FILES" PANEL
+-------------------------------------------------------------
+Add these files in this exact order (or use `include order in tb_top.sv):
+
+  1.  sha256_if.sv           ← Interface
+  2.  sha256_seq_item.sv     ← Transaction
+  3.  sha256_sequencer.sv    ← Sequencer
+  4.  sha256_driver.sv       ← Driver
+  5.  sha256_monitor.sv      ← Monitor
+  6.  sha256_scoreboard.sv   ← Scoreboard
+  7.  sha256_agent.sv        ← Agent
+  8.  sha256_env.sv          ← Environment
+  9.  sha256_sequences.sv    ← All sequences
+  10. sha256_test.sv         ← Test
+  11. tb_top.sv              ← Top (set as TOP MODULE)
+
+-------------------------------------------------------------
+ FILES TO ADD IN "DESIGN FILES" PANEL
+-------------------------------------------------------------
+  From secworks/sha256 src/rtl/:
+
+  1.  sha256_core.v
+  2.  sha256_k_constants.v
+  3.  sha256_w_mem.v
+
+  (Do NOT add sha256.v — that is the register-interface wrapper;
+   the UVM TB talks directly to sha256_core.)
+
+-------------------------------------------------------------
+ TOP MODULE
+-------------------------------------------------------------
+  Set top module to:  tb_top
+
+-------------------------------------------------------------
+ SIMULATOR COMPILE OPTIONS (if needed)
+-------------------------------------------------------------
+  +define+UVM_NO_DEPRECATED
+  +incdir+.
+
+-------------------------------------------------------------
+ EXPECTED OUTPUT
+-------------------------------------------------------------
+
+  [TOP]  Reset de-asserted
+  [SEQ_ABC]   Sending 'abc' directed test vector
+  [DRIVER]    Block driven. digest_valid asserted. digest=0xba7816bf...
+  [MONITOR]   Captured digest=0xba7816bf...
+  [SB]  PASS [1]  digest=0xba7816bf...
+
+  [SEQ_EMPTY] Sending empty message test vector
+  [SB]  PASS [2]  digest=0xe3b0c442...
+
+  [SEQ_ZERO]  Sending all-zeros corner case
+  [SB]  No expected digest set — skipping check (random test)
+
+  [SEQ_ONES]  Sending all-ones corner case
+  [SB]  No expected digest set — skipping check (random test)
+
+  [SEQ_RAND]  Random block: 0x...   (x3)
+  [SEQ_MULTI] Sending multi-block chain (init + next)
+
+  ========== SCOREBOARD SUMMARY ==========
+    PASS : 2
+    FAIL : 0
+  =========================================
+
+  [TEST]  ===== SHA-256 UVM TEST DONE =====
+
+-------------------------------------------------------------
+ UVM COMPONENT HIERARCHY
+-------------------------------------------------------------
+
+  uvm_test_top  (sha256_test)
+  └── env       (sha256_env)
+      ├── agent (sha256_agent)
+      │   ├── sequencer (sha256_sequencer)
+      │   ├── driver    (sha256_driver)
+      │   └── monitor   (sha256_monitor)  ──ap──►
+      └── scoreboard (sha256_scoreboard) ◄──────
+
+-------------------------------------------------------------
+ FILE SUMMARY
+-------------------------------------------------------------
+
+  sha256_if.sv          Interface (clk, reset_n, init, next, mode, block, ready, digest, digest_valid)
+  sha256_seq_item.sv    Transaction object
+  sha256_sequencer.sv   Standard UVM sequencer
+  sha256_driver.sv      Drives DUT — waits for ready, asserts init/next, waits for digest_valid
+  sha256_monitor.sv     Observes DUT outputs, sends to scoreboard via analysis port
+  sha256_scoreboard.sv  Compares observed vs expected digest, prints PASS/FAIL
+  sha256_agent.sv       Bundles driver + monitor + sequencer
+  sha256_env.sv         Bundles agent + scoreboard, wires analysis port
+  sha256_sequences.sv   abc, empty, zero, ones, random, multi-block sequences
+  sha256_test.sv        Runs all sequences, raises/drops objection
+  tb_top.sv             Clock, reset, DUT, config_db set, run_test()
+
+=============================================================================
